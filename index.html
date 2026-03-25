@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#080818">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.svg">
+<meta name="apple-mobile-web-app-title" content="Yozora">
+<title>夜空 Yozora</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#080818;--card:rgba(100,60,180,0.1);--border:rgba(167,139,250,0.2);
+  --purple:#7c3aed;--violet:#a78bfa;--pink:#f9a8d4;--accent:#c084fc;
+  --text:#f0e6ff;--muted:#8b7aa0;--success:#6ee7b7;--warn:#fde68a;--danger:#fca5a5;
+  --nav:75px;--safe:env(safe-area-inset-bottom,0px);
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
+  font-family:-apple-system,'Hiragino Kaku Gothic ProN','Hiragino Sans',sans-serif;}
+#app{position:relative;height:100dvh;display:flex;flex-direction:column;z-index:1}
+
+/* STARS */
+#stars{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.star{position:absolute;background:#fff;border-radius:50%;animation:tw linear infinite}
+.orb{position:fixed;border-radius:50%;filter:blur(80px);pointer-events:none;z-index:0}
+#orb1{width:300px;height:300px;background:rgba(124,58,237,0.18);top:-80px;right:-60px}
+#orb2{width:250px;height:250px;background:rgba(249,168,212,0.12);bottom:100px;left:-80px}
+@keyframes tw{0%,100%{opacity:.15;transform:scale(.8)}50%{opacity:1;transform:scale(1.3)}}
+
+/* PAGES */
+.page{display:none;flex-direction:column;flex:1;overflow:hidden}
+.page.active{display:flex}
+.ph{padding:56px 20px 14px;flex-shrink:0;display:flex;align-items:flex-end;justify-content:space-between}
+.ph-left h1{font-size:26px;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--pink));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.ph .sub{font-size:13px;color:var(--muted);margin-top:3px}
+.pc{flex:1;overflow-y:auto;padding:0 16px 20px;-webkit-overflow-scrolling:touch}
+.pc::-webkit-scrollbar{display:none}
+
+/* VOCAB BUTTON */
+.vocab-btn{background:rgba(192,132,252,.15);border:1px solid rgba(192,132,252,.3);
+  border-radius:20px;padding:5px 12px;font-size:12px;color:var(--accent);cursor:pointer;
+  white-space:nowrap;flex-shrink:0;margin-bottom:3px}
+
+/* FURIGANA */
+ruby{ruby-align:center}
+rt{font-size:.55em;color:var(--muted);font-weight:400}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:20px;
+  padding:18px;margin-bottom:14px;backdrop-filter:blur(10px)}
+.ct{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.9px;margin-bottom:12px}
+
+/* NAV */
+#nav{display:flex;background:rgba(8,8,24,.92);border-top:1px solid var(--border);
+  backdrop-filter:blur(20px);padding-bottom:var(--safe);
+  height:calc(var(--nav) + var(--safe));flex-shrink:0}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;border:none;background:none;color:var(--muted);cursor:pointer;
+  font-size:10px;font-weight:600;letter-spacing:.3px;padding:8px 0}
+.nb.active{color:var(--accent)}
+.nb svg{width:22px;height:22px}
+
+/* BUTTONS */
+.btn{border:none;border-radius:14px;padding:14px 20px;font-size:15px;font-weight:600;
+  width:100%;cursor:pointer;margin-bottom:10px}
+.btn-p{background:linear-gradient(135deg,var(--purple),var(--accent));color:#fff}
+.btn-s{background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--text)}
+
+/* INPUTS */
+.ig{margin-bottom:14px}
+.ig label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:600}
+input,select{width:100%;background:rgba(255,255,255,.07);border:1px solid var(--border);
+  border-radius:12px;padding:12px 16px;color:var(--text);font-size:15px;
+  outline:none;-webkit-appearance:none;appearance:none}
+input:focus,select:focus{border-color:var(--accent);background:rgba(192,132,252,.1)}
+input::placeholder{color:var(--muted)}
+select option{background:#1a0a2e;color:var(--text)}
+
+/* MACROS ROW */
+.mr{display:flex;gap:10px}
+.mi{flex:1;text-align:center;background:rgba(255,255,255,.04);border-radius:14px;padding:12px 6px}
+.mv{font-size:20px;font-weight:700}
+.ml{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.4}
+
+/* RING */
+.rw{position:relative;display:flex;align-items:center;justify-content:center;padding:10px 0}
+.rsvg{width:190px;height:190px}
+.rtxt{position:absolute;text-align:center}
+
+/* ALERT */
+.alert{background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.3);
+  border-radius:14px;padding:14px;margin-bottom:14px;font-size:13px;
+  color:var(--warn);display:none}
+.alert.show{display:block}
+
+/* MEAL ITEM */
+.mi-row{display:flex;align-items:center;padding:11px 0;
+  border-bottom:1px solid rgba(255,255,255,.06)}
+.mi-row:last-child{border-bottom:none}
+.mi-info{flex:1}
+.mi-name{font-size:14px;font-weight:500}
+.mi-mac{font-size:12px;color:var(--muted);margin-top:2px}
+.mi-del{background:none;border:none;color:var(--danger);font-size:20px;cursor:pointer;padding:2px 6px}
+.mi-edit{background:none;border:none;color:var(--violet);font-size:16px;cursor:pointer;padding:2px 6px}
+
+/* PROG BAR */
+.pb-wrap{background:rgba(255,255,255,.08);border-radius:10px;height:8px;overflow:hidden;margin-top:8px}
+.pb-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--purple),var(--pink));transition:width .5s ease}
+
+/* STAT GRID */
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.sc{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px;text-align:center}
+.sv{font-size:22px;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--pink));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sl{font-size:10px;color:var(--muted);margin-top:4px;line-height:1.4}
+
+/* WEIGHT ROW */
+.wr{display:flex;align-items:center;justify-content:space-between;padding:10px 0;
+  border-bottom:1px solid rgba(255,255,255,.06)}
+.wr:last-child{border-bottom:none}
+
+/* RECIPE */
+.ri{display:flex;align-items:center;justify-content:space-between;
+  padding:12px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.ri:last-child{border-bottom:none}
+.radd{background:linear-gradient(135deg,var(--purple),var(--accent));color:#fff;
+  border:none;border-radius:10px;padding:6px 14px;font-size:13px;cursor:pointer;white-space:nowrap}
+
+/* CUSTOM FOOD */
+.custom-badge{display:inline-block;background:rgba(249,168,212,.15);border:1px solid rgba(249,168,212,.3);
+  border-radius:6px;font-size:10px;color:var(--pink);padding:1px 6px;margin-left:6px;vertical-align:middle}
+.cf-row{display:flex;align-items:center;justify-content:space-between;
+  padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.cf-row:last-child{border-bottom:none}
+
+/* MODAL */
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);
+  z-index:100;display:none;align-items:flex-end}
+.mo.show{display:flex}
+.ms{background:#0f0b24;border-radius:24px 24px 0 0;border-top:1px solid var(--border);
+  padding:20px 20px calc(20px + var(--safe));width:100%;max-height:88vh;overflow-y:auto}
+.mh{width:40px;height:4px;background:rgba(255,255,255,.15);border-radius:2px;margin:0 auto 18px}
+.mt{font-size:18px;font-weight:700;margin-bottom:18px;
+  background:linear-gradient(135deg,var(--accent),var(--pink));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+/* SEARCH */
+.sr{border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,.04);
+  display:none;max-height:240px;overflow-y:auto;margin-top:6px}
+.sr.show{display:block}
+.si{padding:10px 16px;font-size:14px;border-bottom:1px solid rgba(255,255,255,.04);
+  cursor:pointer;color:var(--text)}
+.si:last-child{border-bottom:none}
+.si small{color:var(--muted);display:block;font-size:12px;margin-top:2px}
+.si:active{background:rgba(255,255,255,.06)}
+.si-load{padding:12px 16px;font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader{width:14px;height:14px;border:2px solid rgba(167,139,250,.3);border-top-color:var(--violet);
+  border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+.online-tag{font-size:10px;color:var(--violet)}
+
+/* FOOD PREVIEW */
+.fp{display:none;margin-bottom:14px;padding:14px;
+  background:rgba(192,132,252,.1);border-radius:14px;border:1px solid rgba(192,132,252,.2)}
+.fp .fr{display:flex;justify-content:space-between;margin-bottom:6px}
+.fp .fr:last-child{margin-bottom:0}
+.fp .fk{color:var(--muted);font-size:13px}
+.fp .fv{font-weight:600}
+
+/* INGREDIENT ROW */
+.ir{display:flex;gap:8px;margin-bottom:8px;align-items:flex-start}
+.ir .ing-sw{flex:2;position:relative}
+.ing-txt{width:100%;padding:10px 12px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;outline:none}
+.ing-txt:focus{border-color:var(--accent)}
+.ing-drop{position:absolute;top:calc(100% + 2px);left:0;right:0;background:#1a0f2e;border:1px solid var(--border);border-radius:10px;z-index:300;max-height:180px;overflow-y:auto;display:none;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.ing-drop.open{display:block}
+.ing-di{padding:10px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.04)}
+.ing-di:last-child{border-bottom:none}
+.ing-di:active{background:rgba(192,132,252,.2)}
+.ir input[type=number]{flex:1;margin-top:0}
+.ir>button{background:none;border:none;color:var(--danger);font-size:20px;cursor:pointer;flex-shrink:0;padding:10px 4px 0}
+
+/* CHART */
+.ch{position:relative;width:100%;height:190px}
+canvas{display:block;width:100%!important}
+
+/* QUOTE */
+.qj{font-size:21px;font-weight:700;color:var(--pink);text-align:center;line-height:1.7}
+.qf{font-size:13px;color:var(--muted);text-align:center;margin-top:6px;font-style:italic}
+
+/* VOCAB TABLE */
+.vocab-table{width:100%;border-collapse:collapse;font-size:13px}
+.vocab-table tr{border-bottom:1px solid rgba(255,255,255,.06)}
+.vocab-table tr:last-child{border-bottom:none}
+.vocab-table td{padding:9px 6px;vertical-align:middle}
+.vocab-table td:first-child{font-size:15px;font-weight:700;color:var(--pink);width:45%}
+.vocab-table td:nth-child(2){color:var(--accent);font-size:12px;width:28%}
+.vocab-table td:last-child{color:var(--muted);font-size:12px;font-style:italic}
+
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.page.active{animation:fadeUp .3s ease}
+</style>
+</head>
+<body>
+<div id="orb1" class="orb"></div>
+<div id="orb2" class="orb"></div>
+<div id="stars"></div>
+<div id="app">
+
+<!-- ══ ACCUEIL ══ -->
+<div id="page-accueil" class="page active">
+  <div class="ph">
+    <div class="ph-left"><h1>夜空 Yozora</h1><p class="sub" id="h-date"></p></div>
+    <button class="vocab-btn" onclick="openM('m-vocab')">📖 <ruby>語彙<rt>ごい</rt></ruby></button>
+  </div>
+  <div class="pc">
+    <div class="card">
+      <div class="ct">✨ <ruby>今日<rt>きょう</rt></ruby>の<ruby>言葉<rt>ことば</rt></ruby></div>
+      <div class="qj" id="q-jp"></div>
+      <div class="qf" id="q-fr"></div>
+    </div>
+    <div class="card">
+      <div class="ct">🌙 <ruby>今日<rt>きょう</rt></ruby>のカロリー</div>
+      <div class="rw">
+        <svg class="rsvg" viewBox="0 0 190 190">
+          <defs>
+            <linearGradient id="rg" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#7c3aed"/>
+              <stop offset="100%" style="stop-color:#f9a8d4"/>
+            </linearGradient>
+          </defs>
+          <circle cx="95" cy="95" r="78" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="14"/>
+          <circle id="ring" cx="95" cy="95" r="78" fill="none" stroke="url(#rg)" stroke-width="14"
+            stroke-linecap="round" stroke-dasharray="490.1" stroke-dashoffset="490.1"
+            transform="rotate(-90 95 95)" style="transition:stroke-dashoffset .9s ease"/>
+        </svg>
+        <div class="rtxt">
+          <div id="r-kcal" style="font-size:34px;font-weight:800">0</div>
+          <div style="font-size:12px;color:var(--muted)">/ 1100 kcal</div>
+        </div>
+      </div>
+      <div class="mr" style="margin-top:8px">
+        <div class="mi"><div class="mv" id="h-prot">0g</div><div class="ml"><ruby>タンパク質<rt>たんぱくしつ</rt></ruby></div></div>
+        <div class="mi"><div class="mv" id="h-rest">1100</div><div class="ml"><ruby>残<rt>のこ</rt></ruby>りkcal</div></div>
+        <div class="mi"><div class="mv" id="h-meals">0</div><div class="ml"><ruby>食事<rt>しょくじ</rt></ruby><ruby>数<rt>すう</rt></ruby></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">⚖️ <ruby>目標体重<rt>もくひょうたいじゅう</rt></ruby></div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:28px;font-weight:800" id="h-weight">—</div>
+          <div style="font-size:12px;color:var(--muted)"><ruby>現在<rt>げんざい</rt></ruby>の<ruby>体重<rt>たいじゅう</rt></ruby></div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:15px;color:var(--accent)" id="h-delta">—</div>
+          <div style="font-size:12px;color:var(--muted)"><ruby>目標<rt>もくひょう</rt></ruby>：50〜53 kg</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ JOURNAL ══ -->
+<div id="page-journal" class="page">
+  <div class="ph">
+    <div class="ph-left"><h1>📖 <ruby>食事記録<rt>しょくじきろく</rt></ruby></h1><p class="sub" id="j-date"></p></div>
+  </div>
+  <div class="pc">
+    <div class="alert" id="j-alert">
+      ⚠️ <ruby>目標<rt>もくひょう</rt></ruby>カロリーに<ruby>近<rt>ちか</rt></ruby>づいています。<ruby>体<rt>からだ</rt></ruby>の<ruby>声<rt>こえ</rt></ruby>を<ruby>聞<rt>き</rt></ruby>いて 🌙
+    </div>
+    <button class="btn btn-p" onclick="openFood()">＋ <ruby>食<rt>た</rt></ruby>べ<ruby>物<rt>もの</rt></ruby>を<ruby>追加<rt>ついか</rt></ruby>する</button>
+    <button class="btn btn-s" onclick="openRecipeJournal()">＋ レシピを<ruby>追加<rt>ついか</rt></ruby>する</button>
+    <div class="card">
+      <div class="ct">🍽️ <ruby>今日<rt>きょう</rt></ruby>の<ruby>食事<rt>しょくじ</rt></ruby></div>
+      <div id="j-list"><p style="color:var(--muted);font-size:14px;text-align:center;padding:20px 0">まだ<ruby>食事<rt>しょくじ</rt></ruby>が<ruby>記録<rt>きろく</rt></ruby>されていません 🌙</p></div>
+    </div>
+    <div class="card">
+      <div class="ct">📊 まとめ</div>
+      <div class="mr">
+        <div class="mi"><div class="mv" id="j-kcal">0</div><div class="ml">カロリー</div></div>
+        <div class="mi"><div class="mv" id="j-prot">0g</div><div class="ml"><ruby>タンパク質<rt>たんぱくしつ</rt></ruby></div></div>
+        <div class="mi"><div class="mv" id="j-rest">1100</div><div class="ml"><ruby>残<rt>のこ</rt></ruby>り</div></div>
+      </div>
+      <div style="margin-top:12px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px">
+          <span><ruby>タンパク質<rt>たんぱくしつ</rt></ruby></span><span id="j-pp">0 / 80g</span>
+        </div>
+        <div class="pb-wrap"><div class="pb-fill" id="j-pb" style="width:0%"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ RECETTES ══ -->
+<div id="page-recettes" class="page">
+  <div class="ph">
+    <div class="ph-left"><h1>🍜 レシピ</h1><p class="sub">マイレシピ</p></div>
+  </div>
+  <div class="pc">
+    <button class="btn btn-p" onclick="openCreateRecipe()">＋ レシピを<ruby>作<rt>つく</rt></ruby>る</button>
+    <button class="btn btn-s" onclick="openNewFood('manage')">⭐ <ruby>新<rt>あたら</rt></ruby>しい<ruby>食材<rt>しょくざい</rt></ruby>を<ruby>登録<rt>とうろく</rt></ruby>する</button>
+    <div class="card">
+      <div class="ct">✨ マイレシピ</div>
+      <div id="rec-list"><p style="color:var(--muted);font-size:14px;text-align:center;padding:20px 0">レシピがまだありません 🌙</p></div>
+    </div>
+    <div class="card" id="my-foods-card" style="display:none">
+      <div class="ct">⭐ マイ<ruby>食材<rt>しょくざい</rt></ruby></div>
+      <div id="my-foods-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ POIDS ══ -->
+<div id="page-poids" class="page">
+  <div class="ph">
+    <div class="ph-left"><h1>⚖️ <ruby>体重管理<rt>たいじゅうかんり</rt></ruby></h1><p class="sub"><ruby>変化<rt>へんか</rt></ruby>を<ruby>記録<rt>きろく</rt></ruby>する</p></div>
+  </div>
+  <div class="pc">
+    <div class="card">
+      <div class="ct">📝 <ruby>今日<rt>きょう</rt></ruby>の<ruby>体重<rt>たいじゅう</rt></ruby>を<ruby>記録<rt>きろく</rt></ruby>する</div>
+      <div class="ig"><label><ruby>体重<rt>たいじゅう</rt></ruby>（kg）</label>
+        <input type="number" id="w-input" placeholder="例：64.8" step="0.1" min="30" max="200"></div>
+      <button class="btn btn-p" onclick="saveWeight()"><ruby>記録<rt>きろく</rt></ruby>する ✨</button>
+    </div>
+    <div class="card">
+      <div class="ct">📈 <ruby>体重<rt>たいじゅう</rt></ruby>グラフ</div>
+      <div class="ch"><canvas id="w-chart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="ct">📅 <ruby>最近<rt>さいきん</rt></ruby>の<ruby>記録<rt>きろく</rt></ruby></div>
+      <div id="w-hist"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SEMAINE ══ -->
+<div id="page-semaine" class="page">
+  <div class="ph">
+    <div class="ph-left"><h1>📅 <ruby>今週<rt>こんしゅう</rt></ruby></h1><p class="sub"><ruby>過去<rt>かこ</rt></ruby>7<ruby>日間<rt>にちかん</rt></ruby>のまとめ</p></div>
+  </div>
+  <div class="pc">
+    <div class="sg">
+      <div class="sc"><div class="sv" id="wk-kcal">—</div><div class="sl">1<ruby>日<rt>にち</rt></ruby>の<ruby>平均<rt>へいきん</rt></ruby>カロリー</div></div>
+      <div class="sc"><div class="sv" id="wk-prot">—</div><div class="sl">1<ruby>日<rt>にち</rt></ruby>の<ruby>平均<rt>へいきん</rt></ruby><ruby>タンパク質<rt>たんぱくしつ</rt></ruby></div></div>
+      <div class="sc"><div class="sv" id="wk-ok">—</div><div class="sl"><ruby>目標達成<rt>もくひょうたっせい</rt></ruby><ruby>日数<rt>にっすう</rt></ruby></div></div>
+      <div class="sc"><div class="sv" id="wk-delta">—</div><div class="sl"><ruby>体重<rt>たいじゅう</rt></ruby>の<ruby>変化<rt>へんか</rt></ruby></div></div>
+    </div>
+    <div class="card">
+      <div class="ct">🍽️ カロリー — 7<ruby>日間<rt>にちかん</rt></ruby></div>
+      <div class="ch"><canvas id="wk-bar"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="ct">⚖️ <ruby>体重<rt>たいじゅう</rt></ruby> — 7<ruby>日間<rt>にちかん</rt></ruby></div>
+      <div class="ch"><canvas id="wk-line"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav id="nav">
+  <button class="nb active" data-p="accueil" onclick="go('accueil')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    ホーム
+  </button>
+  <button class="nb" data-p="journal" onclick="go('journal')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    <ruby>記録<rt>きろく</rt></ruby>
+  </button>
+  <button class="nb" data-p="recettes" onclick="go('recettes')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+    レシピ
+  </button>
+  <button class="nb" data-p="poids" onclick="go('poids')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    <ruby>体重<rt>たいじゅう</rt></ruby>
+  </button>
+  <button class="nb" data-p="semaine" onclick="go('semaine')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    <ruby>今週<rt>こんしゅう</rt></ruby>
+  </button>
+</nav>
+</div>
+
+<!-- ══ MODAL : 食べ物追加 ══ -->
+<div class="mo" id="m-food">
+  <div class="ms">
+    <div class="mh"></div>
+    <div class="mt">＋ <ruby>食<rt>た</rt></ruby>べ<ruby>物<rt>もの</rt></ruby>を<ruby>追加<rt>ついか</rt></ruby>する</div>
+    <div class="ig">
+      <label><ruby>食<rt>た</rt></ruby>べ<ruby>物<rt>もの</rt></ruby>を<ruby>検索<rt>けんさく</rt></ruby>する</label>
+      <input type="text" id="fs-input" placeholder="Merguez, yaourt, saumon…" oninput="searchF()" autocomplete="off">
+      <div class="sr" id="fs-res"></div>
+    </div>
+    <button class="btn btn-s" style="margin-bottom:6px;font-size:13px" onclick="openNewFood('journal')">
+      ⭐ <ruby>見<rt>み</rt></ruby>つからない場合 → 手動で<ruby>登録<rt>とうろく</rt></ruby>する
+    </button>
+    <div id="fs-info" style="display:none;margin-bottom:14px;padding:12px;background:rgba(255,255,255,.04);border-radius:14px;border:1px solid var(--border)">
+      <div id="fs-name" style="font-weight:600;margin-bottom:3px"></div>
+      <div id="fs-per" style="font-size:12px;color:var(--muted)"></div>
+    </div>
+    <div class="ig"><label><ruby>量<rt>りょう</rt></ruby>（グラム）</label>
+      <input type="number" id="fs-g" placeholder="例：150" min="1" max="3000" oninput="calcF()"></div>
+    <div class="fp" id="fs-prev">
+      <div class="fr"><span class="fk">カロリー</span><span class="fv" id="fp-kcal" style="color:var(--accent)"></span></div>
+      <div class="fr"><span class="fk"><ruby>タンパク質<rt>たんぱくしつ</rt></ruby></span><span class="fv" id="fp-prot" style="color:var(--pink)"></span></div>
+    </div>
+    <button class="btn btn-p" onclick="addFood()"><ruby>記録<rt>きろく</rt></ruby>に<ruby>追加<rt>ついか</rt></ruby>する ✨</button>
+    <button class="btn btn-s" onclick="closeM('m-food')">キャンセル</button>
+  </div>
+</div>
+
+<!-- ══ MODAL : レシピ→記録 ══ -->
+<div class="mo" id="m-rj">
+  <div class="ms">
+    <div class="mh"></div>
+    <div class="mt">＋ レシピを<ruby>追加<rt>ついか</rt></ruby>する</div>
+    <div id="m-rj-list"></div>
+    <button class="btn btn-s" style="margin-top:4px" onclick="closeM('m-rj')">キャンセル</button>
+  </div>
+</div>
+
+<!-- ══ MODAL : レシピ作成 / 修正 ══ -->
+<div class="mo" id="m-cr">
+  <div class="ms">
+    <div class="mh"></div>
+    <div class="mt" id="cr-title">🍜 レシピを<ruby>作<rt>つく</rt></ruby>る</div>
+    <div class="ig"><label>レシピの<ruby>名前<rt>なまえ</rt></ruby></label>
+      <input type="text" id="cr-name" placeholder="例：プロテインボウル"></div>
+    <div class="ct" style="margin-bottom:10px"><ruby>材料<rt>ざいりょう</rt></ruby></div>
+    <div id="cr-ings"></div>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <button class="btn btn-s" onclick="addIng()" style="margin-bottom:0">＋ <ruby>材料<rt>ざいりょう</rt></ruby>を<ruby>追加<rt>ついか</rt></ruby></button>
+      <button class="btn btn-s" onclick="openNewFood('recipe')" style="margin-bottom:0;flex-shrink:0;padding:14px 14px">⭐ <ruby>新規<rt>しんき</rt></ruby></button>
+    </div>
+    <div class="fp" id="cr-prev">
+      <div class="fr"><span class="fk"><ruby>合計<rt>ごうけい</rt></ruby>カロリー</span><span class="fv" id="cr-kcal" style="color:var(--accent)"></span></div>
+      <div class="fr"><span class="fk"><ruby>合計<rt>ごうけい</rt></ruby><ruby>タンパク質<rt>たんぱくしつ</rt></ruby></span><span class="fv" id="cr-prot" style="color:var(--pink)"></span></div>
+      <div class="fr"><span class="fk"><ruby>合計<rt>ごうけい</rt></ruby>グラム</span><span class="fv" id="cr-g" style="color:var(--violet)"></span></div>
+    </div>
+    <button class="btn btn-p" onclick="saveRecipe()">レシピを<ruby>保存<rt>ほぞん</rt></ruby>する ✨</button>
+    <button class="btn btn-s" onclick="closeM('m-cr')">キャンセル</button>
+  </div>
+</div>
+
+<!-- ══ MODAL : 食事を修正 ══ -->
+<div class="mo" id="m-edit-meal">
+  <div class="ms">
+    <div class="mh"></div>
+    <div class="mt">✏️ <ruby>食事<rt>しょくじ</rt></ruby>を<ruby>修正<rt>しゅうせい</rt></ruby>する</div>
+    <div class="ig"><label><ruby>名前<rt>なまえ</rt></ruby></label>
+      <input type="text" id="em-name"></div>
+    <div class="ig" id="em-g-wrap">
+      <label><ruby>量<rt>りょう</rt></ruby>（g） — <span style="color:var(--accent);font-size:11px"><ruby>変更<rt>へんこう</rt></ruby>するとカロリーが<ruby>再計算<rt>さいけいさん</rt></ruby>されます</span></label>
+      <input type="number" id="em-g" min="1" max="3000" oninput="calcEditMeal()"></div>
+    <div style="display:flex;gap:10px">
+      <div class="ig" style="flex:1"><label>カロリー</label>
+        <input type="number" id="em-kcal" min="0"></div>
+      <div class="ig" style="flex:1"><label><ruby>タンパク質<rt>たんぱくしつ</rt></ruby></label>
+        <input type="number" id="em-prot" step="0.1" min="0"></div>
+    </div>
+    <button class="btn btn-p" onclick="saveEditMeal()"><ruby>保存<rt>ほぞん</rt></ruby>する ✨</button>
+    <button class="btn btn-s" onclick="closeM('m-edit-meal')">キャンセル</button>
+  </div>
+</div>
+
+<!-- ══ MODAL : 新しい食材を登録 ══ -->
+<div class="mo" id="m-new-food">
+  <div class="ms">
+    <div class="mh"></div>
+    <div class="mt">⭐ <ruby>新<rt>あたら</rt></ruby>しい<ruby>食材<rt>しょくざい</rt></ruby>を<ruby>登録<rt>とうろく</rt></ruby>する</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6">
+      リストにない<ruby>食材<rt>しょくざい</rt></ruby>を<ruby>自分<rt>じぶん</rt></ruby>で<ruby>追加<rt>ついか</rt></ruby>できます。<br>
+      <span style="font-style:italic;font-size:12px">Ajoute n'importe quel aliment manuellement.</span>
+    </p>
+    <div class="ig"><label><ruby>食材<rt>しょくざい</rt></ruby>の<ruby>名前<rt>なまえ</rt></ruby></label>
+      <input type="text" id="nf-name" placeholder="例：Actimel, Barre de céréales…" oninput="previewNF()"></div>
+    <div style="display:flex;gap:10px">
+      <div class="ig" style="flex:1"><label>カロリー / 100g</label>
+        <input type="number" id="nf-kcal" placeholder="例：95" min="0" step="1" oninput="previewNF()"></div>
+      <div class="ig" style="flex:1"><label><ruby>タンパク質<rt>たんぱくしつ</rt></ruby> / 100g</label>
+        <input type="number" id="nf-prot" placeholder="例：3.2" min="0" step="0.1" oninput="previewNF()"></div>
+    </div>
+    <div id="nf-prev" style="display:none;margin-bottom:14px;padding:12px;background:rgba(249,168,212,.08);border-radius:14px;border:1px solid rgba(249,168,212,.2);font-size:13px;color:var(--muted)">
+      100gあたり : <span id="nf-prev-txt" style="color:var(--pink);font-weight:600"></span>
+    </div>
+    <button class="btn btn-p" onclick="saveNewFood()"><ruby>登録<rt>とうろく</rt></ruby>する ⭐</button>
+    <button class="btn btn-s" onclick="closeM('m-new-food')">キャンセル</button>
+  </div>
+</div>
+
+<!-- ══ MODAL : 語彙メモ ══ -->
+<div class="mo" id="m-vocab">
+  <div class="ms">
+    <div class="mh"></div>
+    <div class="mt">📖 <ruby>語彙<rt>ごい</rt></ruby>メモ</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6">
+      このアプリで<ruby>使<rt>つか</rt></ruby>う<ruby>単語<rt>たんご</rt></ruby>の<ruby>一覧<rt>いちらん</rt></ruby>です ✨<br>
+      <span style="font-style:italic">Liste des mots utilisés dans l'app</span>
+    </p>
+    <div class="ct">🍎 <ruby>栄養<rt>えいよう</rt></ruby> · Nutrition</div>
+    <table class="vocab-table">
+      <tr><td>カロリー</td><td>kcal</td><td>Calories</td></tr>
+      <tr><td><ruby>タンパク質<rt>たんぱくしつ</rt></ruby></td><td>g</td><td>Protéines</td></tr>
+      <tr><td><ruby>目標<rt>もくひょう</rt></ruby>カロリー</td><td>1100 kcal</td><td>Objectif calorique</td></tr>
+      <tr><td><ruby>残<rt>のこ</rt></ruby>り</td><td>—</td><td>Restant</td></tr>
+      <tr><td><ruby>合計<rt>ごうけい</rt></ruby></td><td>—</td><td>Total</td></tr>
+      <tr><td><ruby>平均<rt>へいきん</rt></ruby></td><td>—</td><td>Moyenne</td></tr>
+      <tr><td><ruby>量<rt>りょう</rt></ruby></td><td>g / ml</td><td>Quantité</td></tr>
+    </table>
+    <div class="ct" style="margin-top:16px">⚖️ <ruby>体<rt>からだ</rt></ruby> · Corps</div>
+    <table class="vocab-table">
+      <tr><td><ruby>体重<rt>たいじゅう</rt></ruby></td><td>kg</td><td>Poids</td></tr>
+      <tr><td><ruby>目標体重<rt>もくひょうたいじゅう</rt></ruby></td><td>50〜53 kg</td><td>Poids objectif</td></tr>
+      <tr><td><ruby>現在<rt>げんざい</rt></ruby></td><td>—</td><td>Actuel</td></tr>
+      <tr><td><ruby>変化<rt>へんか</rt></ruby></td><td>—</td><td>Évolution</td></tr>
+    </table>
+    <div class="ct" style="margin-top:16px">📖 <ruby>行動<rt>こうどう</rt></ruby> · Actions</div>
+    <table class="vocab-table">
+      <tr><td><ruby>記録<rt>きろく</rt></ruby>する</td><td>—</td><td>Enregistrer</td></tr>
+      <tr><td><ruby>追加<rt>ついか</rt></ruby>する</td><td>—</td><td>Ajouter</td></tr>
+      <tr><td><ruby>検索<rt>けんさく</rt></ruby>する</td><td>—</td><td>Rechercher</td></tr>
+      <tr><td><ruby>保存<rt>ほぞん</rt></ruby>する</td><td>—</td><td>Sauvegarder</td></tr>
+      <tr><td><ruby>修正<rt>しゅうせい</rt></ruby>する</td><td>—</td><td>Modifier</td></tr>
+    </table>
+    <div class="ct" style="margin-top:16px">🗓️ <ruby>時間<rt>じかん</rt></ruby> · Temps</div>
+    <table class="vocab-table">
+      <tr><td><ruby>今日<rt>きょう</rt></ruby></td><td>—</td><td>Aujourd'hui</td></tr>
+      <tr><td><ruby>今週<rt>こんしゅう</rt></ruby></td><td>—</td><td>Cette semaine</td></tr>
+      <tr><td><ruby>最近<rt>さいきん</rt></ruby></td><td>—</td><td>Récemment</td></tr>
+      <tr><td><ruby>日間<rt>にちかん</rt></ruby></td><td>—</td><td>Jours (durée)</td></tr>
+    </table>
+    <button class="btn btn-s" style="margin-top:20px" onclick="closeM('m-vocab')">閉じる</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// BASE ALIMENTAIRE
+// ══════════════════════════════════════════
+const FOODS=[
+  {id:1,n:"Riz blanc cuit",c:"Féculents",k:130,p:2.7},{id:2,n:"Riz blanc cru",c:"Féculents",k:350,p:7.0},
+  {id:3,n:"Pâtes cuites",c:"Féculents",k:131,p:5.0},{id:4,n:"Pâtes crues",c:"Féculents",k:357,p:12.0},
+  {id:5,n:"Pain blanc",c:"Féculents",k:265,p:8.0},{id:6,n:"Pain complet",c:"Féculents",k:247,p:9.0},
+  {id:7,n:"Baguette",c:"Féculents",k:270,p:9.0},{id:8,n:"Flocons d'avoine",c:"Féculents",k:370,p:13.0},
+  {id:9,n:"Quinoa cuit",c:"Féculents",k:120,p:4.4},{id:10,n:"Pomme de terre cuite",c:"Féculents",k:86,p:1.9},
+  {id:11,n:"Patate douce cuite",c:"Féculents",k:86,p:1.6},{id:12,n:"Semoule cuite",c:"Féculents",k:112,p:3.8},
+  {id:13,n:"Maïs en grains",c:"Féculents",k:108,p:3.2},{id:14,n:"Galette de riz",c:"Féculents",k:380,p:7.0},
+  {id:15,n:"Pain de mie complet",c:"Féculents",k:245,p:9.5},
+  {id:16,n:"Lentilles cuites",c:"Légumineuses",k:116,p:9.0},{id:17,n:"Pois chiches cuits",c:"Légumineuses",k:164,p:8.9},
+  {id:18,n:"Haricots rouges cuits",c:"Légumineuses",k:127,p:8.7},{id:19,n:"Edamame",c:"Légumineuses",k:122,p:11.0},
+  {id:20,n:"Tofu ferme",c:"Légumineuses",k:76,p:8.0},
+  {id:21,n:"Poulet blanc cuit",c:"Viandes",k:165,p:31.0},{id:22,n:"Poulet cuisse cuite",c:"Viandes",k:215,p:26.0},
+  {id:23,n:"Dinde blanc cuit",c:"Viandes",k:157,p:30.0},{id:24,n:"Bœuf haché 5%",c:"Viandes",k:121,p:21.0},
+  {id:25,n:"Bœuf haché 15%",c:"Viandes",k:215,p:19.0},{id:26,n:"Steak de bœuf",c:"Viandes",k:175,p:26.0},
+  {id:27,n:"Côte de porc",c:"Viandes",k:242,p:27.0},{id:28,n:"Jambon blanc",c:"Viandes",k:107,p:17.0},
+  {id:29,n:"Jambon cru",c:"Viandes",k:145,p:25.0},
+  {id:30,n:"Saumon cuit",c:"Poissons",k:206,p:20.0},{id:31,n:"Thon en boîte (eau)",c:"Poissons",k:116,p:26.0},
+  {id:32,n:"Cabillaud cuit",c:"Poissons",k:82,p:18.0},{id:33,n:"Crevettes cuites",c:"Poissons",k:99,p:21.0},
+  {id:34,n:"Sardines à l'huile",c:"Poissons",k:208,p:20.0},{id:35,n:"Maquereau cuit",c:"Poissons",k:262,p:19.0},
+  {id:36,n:"Saumon fumé",c:"Poissons",k:142,p:23.0},
+  {id:37,n:"Œuf entier (pour 100g)",c:"Œufs",k:155,p:13.0},{id:38,n:"Blanc d'œuf",c:"Œufs",k:52,p:11.0},
+  {id:39,n:"Lait entier",c:"Laitiers",k:65,p:3.2},{id:40,n:"Lait demi-écrémé",c:"Laitiers",k:46,p:3.2},
+  {id:41,n:"Yaourt nature 0%",c:"Laitiers",k:36,p:4.3},{id:42,n:"Yaourt grec 0%",c:"Laitiers",k:57,p:9.9},
+  {id:43,n:"Fromage blanc 0%",c:"Laitiers",k:45,p:7.0},{id:44,n:"Skyr nature",c:"Laitiers",k:62,p:11.0},
+  {id:45,n:"Fromage cottage",c:"Laitiers",k:98,p:11.0},{id:46,n:"Petits-suisses",c:"Laitiers",k:120,p:7.0},
+  {id:47,n:"Emmental",c:"Laitiers",k:382,p:28.0},{id:48,n:"Camembert",c:"Laitiers",k:299,p:20.0},
+  {id:49,n:"Mozzarella",c:"Laitiers",k:254,p:18.0},{id:50,n:"Parmesan",c:"Laitiers",k:431,p:38.0},
+  {id:51,n:"Beurre",c:"Laitiers",k:741,p:0.9},{id:52,n:"Crème fraîche entière",c:"Laitiers",k:292,p:2.5},
+  {id:53,n:"Yaourt aux fruits",c:"Laitiers",k:90,p:3.0},
+  {id:54,n:"Épinards crus",c:"Légumes",k:23,p:2.9},{id:55,n:"Brocoli cuit",c:"Légumes",k:35,p:2.4},
+  {id:56,n:"Haricots verts cuits",c:"Légumes",k:35,p:1.9},{id:57,n:"Courgette cuite",c:"Légumes",k:20,p:1.5},
+  {id:58,n:"Tomate",c:"Légumes",k:18,p:0.9},{id:59,n:"Concombre",c:"Légumes",k:12,p:0.6},
+  {id:60,n:"Carotte crue",c:"Légumes",k:41,p:0.9},{id:61,n:"Poivron rouge",c:"Légumes",k:31,p:1.0},
+  {id:62,n:"Champignons de Paris",c:"Légumes",k:22,p:3.1},{id:63,n:"Chou-fleur cuit",c:"Légumes",k:25,p:2.5},
+  {id:64,n:"Salade verte",c:"Légumes",k:15,p:1.4},{id:65,n:"Aubergine cuite",c:"Légumes",k:35,p:0.8},
+  {id:66,n:"Poireau cuit",c:"Légumes",k:31,p:1.5},{id:67,n:"Petit pois cuit",c:"Légumes",k:84,p:5.4},
+  {id:68,n:"Oignon cru",c:"Légumes",k:40,p:1.1},{id:69,n:"Avocat",c:"Légumes",k:160,p:2.0},
+  {id:70,n:"Betterave cuite",c:"Légumes",k:44,p:1.7},{id:71,n:"Chou blanc cru",c:"Légumes",k:27,p:1.3},
+  {id:72,n:"Céleri branche",c:"Légumes",k:16,p:0.7},{id:73,n:"Asperge cuite",c:"Légumes",k:22,p:2.4},
+  {id:74,n:"Ail",c:"Légumes",k:149,p:6.4},
+  {id:75,n:"Pomme",c:"Fruits",k:52,p:0.3},{id:76,n:"Banane",c:"Fruits",k:89,p:1.1},
+  {id:77,n:"Orange",c:"Fruits",k:47,p:0.9},{id:78,n:"Fraise",c:"Fruits",k:32,p:0.7},
+  {id:79,n:"Raisin",c:"Fruits",k:69,p:0.6},{id:80,n:"Melon",c:"Fruits",k:34,p:0.8},
+  {id:81,n:"Pastèque",c:"Fruits",k:30,p:0.6},{id:82,n:"Mangue",c:"Fruits",k:60,p:0.8},
+  {id:83,n:"Kiwi",c:"Fruits",k:61,p:1.1},{id:84,n:"Poire",c:"Fruits",k:57,p:0.4},
+  {id:85,n:"Pêche",c:"Fruits",k:39,p:0.9},{id:86,n:"Myrtilles",c:"Fruits",k:57,p:0.7},
+  {id:87,n:"Framboises",c:"Fruits",k:52,p:1.2},{id:88,n:"Ananas",c:"Fruits",k:50,p:0.5},
+  {id:89,n:"Abricot",c:"Fruits",k:48,p:1.4},{id:90,n:"Compote de pommes",c:"Fruits",k:50,p:0.3},
+  {id:91,n:"Huile d'olive",c:"Matières grasses",k:884,p:0.0},{id:92,n:"Huile de tournesol",c:"Matières grasses",k:884,p:0.0},
+  {id:93,n:"Mayonnaise",c:"Sauces",k:680,p:1.5},{id:94,n:"Ketchup",c:"Sauces",k:112,p:1.5},
+  {id:95,n:"Moutarde",c:"Sauces",k:60,p:4.0},{id:96,n:"Sauce soja",c:"Sauces",k:60,p:8.0},
+  {id:97,n:"Chocolat noir 70%",c:"Snacks",k:598,p:8.0},{id:98,n:"Amandes",c:"Oléagineux",k:579,p:21.0},
+  {id:99,n:"Noix de cajou",c:"Oléagineux",k:553,p:18.0},{id:100,n:"Noix",c:"Oléagineux",k:654,p:15.0},
+  {id:101,n:"Whey protéine (poudre)",c:"Suppléments",k:400,p:80.0},{id:102,n:"Crêpe nature",c:"Snacks",k:230,p:6.7},
+  {id:103,n:"Miel",c:"Sucré",k:304,p:0.3},{id:104,n:"Soupe miso",c:"Japonais",k:40,p:3.0},
+  {id:105,n:"Sushi saumon (pièce ~25g)",c:"Japonais",k:50,p:2.0},
+  // Charcuterie
+  {id:106,n:"Merguez cuite",c:"Charcuterie",k:270,p:14.0},{id:107,n:"Chipolata cuite",c:"Charcuterie",k:282,p:13.0},
+  {id:108,n:"Saucisson sec",c:"Charcuterie",k:400,p:22.0},{id:109,n:"Chorizo",c:"Charcuterie",k:450,p:24.0},
+  {id:110,n:"Lardons fumés",c:"Charcuterie",k:330,p:17.0},{id:111,n:"Saucisse de Francfort",c:"Charcuterie",k:290,p:12.0},
+  {id:112,n:"Andouillette",c:"Charcuterie",k:250,p:15.0},{id:113,n:"Boudin noir",c:"Charcuterie",k:265,p:14.0},
+  // Plats courants
+  {id:114,n:"Nuggets de poulet",c:"Plats",k:260,p:15.0},{id:115,n:"Cordon bleu poulet",c:"Plats",k:218,p:13.0},
+  {id:116,n:"Frites cuites",c:"Plats",k:312,p:3.5},{id:117,n:"Pizza margherita",c:"Plats",k:253,p:10.0},
+  {id:118,n:"Wrap / Tortilla",c:"Plats",k:290,p:8.0},{id:119,n:"Croque-monsieur",c:"Plats",k:320,p:14.0},
+  {id:120,n:"Kebab (viande)",c:"Plats",k:200,p:18.0},{id:121,n:"Chips nature",c:"Snacks",k:536,p:6.0},
+  {id:122,n:"Biscuits Petit beurre",c:"Snacks",k:430,p:7.0},{id:123,n:"Barre de céréales",c:"Snacks",k:390,p:5.0},
+  // Laitiers & desserts
+  {id:124,n:"Crème dessert vanille",c:"Laitiers",k:120,p:3.5},{id:125,n:"Gâteau de riz",c:"Laitiers",k:130,p:4.0},
+  {id:126,n:"Fromage Kiri",c:"Laitiers",k:250,p:7.0},
+  // Boissons
+  {id:127,n:"Jus d'orange",c:"Boissons",k:44,p:0.7},{id:128,n:"Lait de soja",c:"Boissons",k:33,p:3.3},
+  {id:129,n:"Lait d'avoine",c:"Boissons",k:47,p:1.0},{id:130,n:"Café noir",c:"Boissons",k:2,p:0.3},
+];
+
+const QUOTES=[
+  {jp:"千里の道も一歩から",fr:"Même un voyage de mille lieues commence par un premier pas"},
+  {jp:"継続は力なり",fr:"La persévérance, c'est la force"},
+  {jp:"七転び八起き",fr:"Tombe sept fois, relève-toi huit"},
+  {jp:"努力は裏切らない",fr:"Le travail ne trahit jamais"},
+  {jp:"今日も頑張ろう",fr:"Faisons de notre mieux aujourd'hui aussi"},
+  {jp:"美しい未来のために",fr:"Pour un avenir magnifique"},
+  {jp:"自分を信じれば奇跡が起きる",fr:"Si tu crois en toi, les miracles arrivent"},
+  {jp:"一歩一歩、着実に",fr:"Pas à pas, sûrement"},
+  {jp:"諦めなければ夢は叶う",fr:"Si tu n'abandonnes pas, tes rêves se réaliseront"},
+  {jp:"毎日が新しい始まり",fr:"Chaque jour est un nouveau départ"},
+  {jp:"小さな積み重ねが大きな変化を生む",fr:"Les petits efforts créent les grands changements"},
+  {jp:"自分を愛することから始まる",fr:"Tout commence par s'aimer soi-même"},
+  {jp:"強さは挑戦の中に生まれる",fr:"La force naît dans le défi"},
+  {jp:"輝く未来は今日の努力から",fr:"Un avenir brillant naît des efforts d'aujourd'hui"},
+  {jp:"花は嵐にも負けない",fr:"Les fleurs ne cèdent pas aux tempêtes"},
+  {jp:"夢は逃げない。逃げるのは自分だ",fr:"Les rêves ne fuient pas — c'est toi qui fuis"},
+  {jp:"今この瞬間を大切に",fr:"Chéris ce moment présent"},
+  {jp:"あなたは思っているより強い",fr:"Tu es plus forte que tu ne le penses"},
+  {jp:"体は自分の宝物",fr:"Ton corps est ton trésor"},
+  {jp:"変化は可能だ、信じよう",fr:"Le changement est possible — crois-y"},
+  {jp:"挑戦することで人は成長する",fr:"C'est en relevant des défis qu'on grandit"},
+];
+
+// ══════════════════════════════════════════
+// STORAGE
+// ══════════════════════════════════════════
+const TK=1100,TP=80;
+const today=()=>new Date().toISOString().split('T')[0];
+const getJ=d=>{const v=localStorage.getItem('j_'+d);return v?JSON.parse(v):{date:d,meals:[]};};
+const setJ=e=>localStorage.setItem('j_'+e.date,JSON.stringify(e));
+const getWs=()=>{const v=localStorage.getItem('weights');return v?JSON.parse(v):[];};
+const setWs=a=>localStorage.setItem('weights',JSON.stringify(a));
+const getRs=()=>{const v=localStorage.getItem('recipes');return v?JSON.parse(v):[];};
+const setRs=a=>localStorage.setItem('recipes',JSON.stringify(a));
+const getCFs=()=>{const v=localStorage.getItem('custom_foods');return v?JSON.parse(v):[];};
+const setCFs=a=>localStorage.setItem('custom_foods',JSON.stringify(a));
+const getAllFoods=()=>[...FOODS,...getCFs()];
+
+function dayTotals(d){
+  const e=getJ(d);let k=0,p=0;
+  e.meals.forEach(m=>{k+=m.k;p+=m.p;});
+  return{k:Math.round(k),p:Math.round(p*10)/10,n:e.meals.length};
+}
+
+// ══════════════════════════════════════════
+// STARS
+// ══════════════════════════════════════════
+(function(){
+  const s=document.getElementById('stars');
+  for(let i=0;i<90;i++){
+    const el=document.createElement('div');el.className='star';
+    const sz=Math.random()*2.5+.5;
+    el.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;`+
+      `width:${sz}px;height:${sz}px;animation-duration:${Math.random()*4+2}s;animation-delay:${Math.random()*6}s`;
+    s.appendChild(el);
+  }
+})();
+
+// ══════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════
+let cur='accueil';
+function go(p){
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(x=>x.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  document.querySelector('[data-p="'+p+'"]').classList.add('active');
+  const pc=document.querySelector('#page-'+p+' .pc');
+  if(pc)pc.scrollTop=0;
+  cur=p;render(p);
+}
+function render(p){
+  if(p==='accueil') rAccueil();
+  if(p==='journal') rJournal();
+  if(p==='recettes')rRecettes();
+  if(p==='poids')   rPoids();
+  if(p==='semaine') rSemaine();
+}
+
+// ══════════════════════════════════════════
+// ACCUEIL
+// ══════════════════════════════════════════
+function rAccueil(){
+  const now=new Date();
+  const doy=Math.floor((now-new Date(now.getFullYear(),0,0))/864e5);
+  const q=QUOTES[doy%QUOTES.length];
+  document.getElementById('q-jp').textContent=q.jp;
+  document.getElementById('q-fr').textContent=q.fr;
+  const wd=['日','月','火','水','木','金','土'];
+  document.getElementById('h-date').textContent=
+    `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日（${wd[now.getDay()]}）`;
+  const t=dayTotals(today());
+  const circ=2*Math.PI*78;
+  const ring=document.getElementById('ring');
+  ring.style.strokeDashoffset=circ*(1-Math.min(t.k/TK,1));
+  ring.style.stroke=t.k>TK*1.05?'#f87171':t.k>TK*.92?'#fde68a':'url(#rg)';
+  document.getElementById('r-kcal').textContent=t.k;
+  document.getElementById('h-prot').textContent=t.p+'g';
+  document.getElementById('h-rest').textContent=Math.max(0,TK-t.k);
+  document.getElementById('h-meals').textContent=t.n;
+  const ws=getWs();
+  if(ws.length){
+    const last=ws[ws.length-1];
+    document.getElementById('h-weight').textContent=last.w+' kg';
+    const d=(last.w-51.5).toFixed(1);
+    document.getElementById('h-delta').textContent=d>0?`あと ${d} kg`:'🎉 目標達成！';
+  } else {
+    document.getElementById('h-weight').textContent='— kg';
+    document.getElementById('h-delta').textContent='体重を記録してね →';
+  }
+}
+
+// ══════════════════════════════════════════
+// JOURNAL
+// ══════════════════════════════════════════
+function rJournal(){
+  const td=today(),entry=getJ(td),t=dayTotals(td);
+  const wd=['日','月','火','水','木','金','土'];
+  const d=new Date();
+  document.getElementById('j-date').textContent=
+    `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${wd[d.getDay()]}）`;
+  document.getElementById('j-alert').classList.toggle('show',t.k>=1050);
+  const list=document.getElementById('j-list');
+  if(!entry.meals.length){
+    list.innerHTML='<p style="color:var(--muted);font-size:14px;text-align:center;padding:20px 0">まだ食事が記録されていません 🌙</p>';
+  } else {
+    list.innerHTML=entry.meals.map((m,i)=>`
+      <div class="mi-row">
+        <div class="mi-info">
+          <div class="mi-name">${m.n}</div>
+          <div class="mi-mac">${m.g?m.g+'g · ':''}${m.k} kcal · ${m.p}g タンパク質</div>
+        </div>
+        <button class="mi-edit" onclick="editMeal(${i})">✏️</button>
+        <button class="mi-del" onclick="delMeal(${i})">×</button>
+      </div>`).join('');
+  }
+  document.getElementById('j-kcal').textContent=t.k;
+  document.getElementById('j-prot').textContent=t.p+'g';
+  document.getElementById('j-rest').textContent=Math.max(0,TK-t.k);
+  const pp=Math.min(t.p/TP*100,100);
+  document.getElementById('j-pp').textContent=`${t.p} / ${TP}g`;
+  document.getElementById('j-pb').style.width=pp+'%';
+}
+function delMeal(i){const td=today(),e=getJ(td);e.meals.splice(i,1);setJ(e);rJournal();rAccueil();}
+
+// ══════════════════════════════════════════
+// RECETTES
+// ══════════════════════════════════════════
+function rRecettes(){
+  const rs=getRs(),el=document.getElementById('rec-list');
+  el.innerHTML=rs.length?rs.map((r,i)=>`
+    <div class="ri">
+      <div>
+        <div style="font-size:14px;font-weight:600">${r.n}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">${r.k} kcal · ${r.p}g タンパク質 · ${r.g}g</div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="radd" onclick="recToJournal(${i})">+ 記録</button>
+        <button onclick="editRecipe(${i})" style="background:none;border:none;color:var(--violet);font-size:18px;cursor:pointer">✏️</button>
+        <button onclick="delRecipe(${i})" style="background:none;border:none;color:var(--danger);font-size:20px;cursor:pointer">×</button>
+      </div>
+    </div>`).join('')
+    :'<p style="color:var(--muted);font-size:14px;text-align:center;padding:20px 0">レシピがまだありません 🌙</p>';
+  const cfs=getCFs(),card=document.getElementById('my-foods-card'),list=document.getElementById('my-foods-list');
+  if(cfs.length){
+    card.style.display='block';
+    list.innerHTML=cfs.map((f,i)=>`
+      <div class="cf-row">
+        <div>
+          <div style="font-size:14px;font-weight:500">${f.n} <span class="custom-badge">⭐ マイ</span></div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">${f.k} kcal · ${f.p}g タンパク質 — 100gあたり</div>
+        </div>
+        <button onclick="delCustomFood(${i})" style="background:none;border:none;color:var(--danger);font-size:20px;cursor:pointer">×</button>
+      </div>`).join('');
+  } else card.style.display='none';
+}
+function delRecipe(i){const rs=getRs();rs.splice(i,1);setRs(rs);rRecettes();}
+function delCustomFood(i){const cfs=getCFs(),n=cfs[i].n;cfs.splice(i,1);setCFs(cfs);rRecettes();showToast(`「${n}」を削除しました`);}
+function recToJournal(i){
+  const r=getRs()[i],td=today(),e=getJ(td);
+  e.meals.push({n:r.n+'（レシピ）',g:r.g,k:r.k,p:r.p});
+  setJ(e);rJournal();rAccueil();
+}
+
+// ══════════════════════════════════════════
+// POIDS
+// ══════════════════════════════════════════
+function rPoids(){
+  const ws=getWs(),hist=document.getElementById('w-hist');
+  hist.innerHTML=ws.length?[...ws].reverse().slice(0,10).map((w,i,arr)=>{
+    const prev=arr[i+1],delta=prev?(w.w-prev.w).toFixed(1):null;
+    const sign=delta>0?'↑':delta<0?'↓':'→',col=delta>0?'var(--danger)':delta<0?'var(--success)':'var(--muted)';
+    return `<div class="wr">
+      <span style="font-size:13px;color:var(--muted)">${fmtD(w.d)}</span>
+      <div style="display:flex;align-items:center;gap:10px">
+        ${delta!==null?`<span style="font-size:12px;color:${col}">${sign} ${Math.abs(delta)}</span>`:''}
+        <span style="font-size:17px;font-weight:700;color:var(--accent)">${w.w} kg</span>
+        <button onclick="delWeight('${w.d}')" style="background:none;border:none;color:var(--danger);font-size:17px;cursor:pointer">×</button>
+      </div></div>`;
+  }).join(''):'<p style="color:var(--muted);font-size:14px;text-align:center;padding:20px 0">体重がまだ記録されていません</p>';
+  drawWeight('w-chart',ws.slice(-30));
+}
+function saveWeight(){
+  const v=parseFloat(document.getElementById('w-input').value);
+  if(!v||v<30||v>200){showToast('正しい体重を入力してください（30〜200 kg）');return;}
+  const ws=getWs(),td=today(),idx=ws.findIndex(w=>w.d===td);
+  if(idx>=0)ws[idx].w=v;else ws.push({d:td,w:v});
+  ws.sort((a,b)=>a.d.localeCompare(b.d));setWs(ws);
+  document.getElementById('w-input').value='';rPoids();rAccueil();showToast('体重を記録しました ✨');
+}
+function delWeight(d){setWs(getWs().filter(w=>w.d!==d));rPoids();rAccueil();}
+
+// ══════════════════════════════════════════
+// SEMAINE
+// ══════════════════════════════════════════
+function rSemaine(){
+  const days=[];
+  for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);days.push(d.toISOString().split('T')[0]);}
+  const data=days.map(d=>({d,t:dayTotals(d)}));
+  const active=data.filter(x=>x.t.n>0);
+  const avgK=active.length?Math.round(active.reduce((s,x)=>s+x.t.k,0)/active.length):0;
+  const avgP=active.length?Math.round(active.reduce((s,x)=>s+x.t.p,0)/active.length*10)/10:0;
+  const ok=active.filter(x=>x.t.k<=TK*1.05).length;
+  document.getElementById('wk-kcal').textContent=avgK?avgK+' kcal':'—';
+  document.getElementById('wk-prot').textContent=avgP?avgP+'g':'—';
+  document.getElementById('wk-ok').textContent=active.length?`${ok} / ${active.length}`:'—';
+  const ws=getWs(),weekW=ws.filter(w=>w.d>=days[0]);
+  document.getElementById('wk-delta').textContent=weekW.length>=2?
+    (weekW[weekW.length-1].w-weekW[0].w>0?'+':'')+((weekW[weekW.length-1].w-weekW[0].w).toFixed(1))+' kg':'—';
+  drawBar('wk-bar',data.map(x=>({l:fmtDs(x.d),v:x.t.k})));
+  drawLine('wk-line',days.map(d=>{const w=ws.find(e=>e.d===d);return{l:fmtDs(d),v:w?w.w:null};}));
+}
+
+// ══════════════════════════════════════════
+// CHARTS
+// ══════════════════════════════════════════
+function getCtx(id){
+  const cv=document.getElementById(id);if(!cv)return null;
+  const dpr=window.devicePixelRatio||1,W=cv.parentElement.clientWidth||300,H=190;
+  cv.width=W*dpr;cv.height=H*dpr;
+  const ctx=cv.getContext('2d');ctx.scale(dpr,dpr);return{ctx,W,H};
+}
+function drawWeight(id,entries){
+  const r=getCtx(id);if(!r)return;const{ctx,W,H}=r;
+  const pad={t:20,r:16,b:36,l:42},w=W-pad.l-pad.r,h=H-pad.t-pad.b;
+  if(entries.length<2){noData(ctx,W,H);return;}
+  const vals=entries.map(e=>e.w),mn=Math.min(...vals)-.8,mx=Math.max(...vals)+.8,rng=mx-mn;
+  const tx=i=>pad.l+(i/(entries.length-1))*w,ty=v=>pad.t+h-((v-mn)/rng)*h;
+  grid(ctx,pad,w,h);
+  if(mn<54&&mx>49){ctx.fillStyle='rgba(110,231,183,.07)';ctx.fillRect(pad.l,Math.min(ty(53),ty(50)),w,Math.abs(ty(50)-ty(53)));}
+  const g=ctx.createLinearGradient(0,pad.t,0,pad.t+h);
+  g.addColorStop(0,'rgba(192,132,252,.25)');g.addColorStop(1,'rgba(192,132,252,0)');
+  ctx.beginPath();ctx.moveTo(tx(0),ty(vals[0]));
+  for(let i=1;i<entries.length;i++)ctx.lineTo(tx(i),ty(vals[i]));
+  ctx.lineTo(tx(entries.length-1),pad.t+h);ctx.lineTo(tx(0),pad.t+h);
+  ctx.closePath();ctx.fillStyle=g;ctx.fill();
+  ctx.beginPath();ctx.moveTo(tx(0),ty(vals[0]));
+  for(let i=1;i<entries.length;i++)ctx.lineTo(tx(i),ty(vals[i]));
+  ctx.strokeStyle='#c084fc';ctx.lineWidth=2.5;ctx.lineJoin='round';ctx.stroke();
+  entries.forEach((e,i)=>{ctx.beginPath();ctx.arc(tx(i),ty(e.w),4,0,Math.PI*2);ctx.fillStyle='#f9a8d4';ctx.fill();});
+  ctx.fillStyle='rgba(139,122,160,.8)';ctx.font='11px -apple-system';ctx.textAlign='right';
+  for(let i=0;i<=4;i++){const v=mn+(rng*(1-i/4));ctx.fillText(v.toFixed(1),pad.l-4,pad.t+(i/4)*h+4);}
+  ctx.textAlign='center';
+  [0,Math.floor(entries.length/2),entries.length-1].forEach(i=>{if(entries[i])ctx.fillText(fmtDs(entries[i].d),tx(i),H-6);});
+}
+function drawBar(id,data){
+  const r=getCtx(id);if(!r)return;const{ctx,W,H}=r;
+  const pad={t:24,r:22,b:36,l:10},w=W-pad.l-pad.r,h=H-pad.t-pad.b;
+  const maxV=Math.max(...data.map(d=>d.v),TK,100);
+  const bw=(w/data.length)*.65,gap=(w/data.length)*.35;
+  const ty=v=>pad.t+h-(v/maxV)*h;
+  ctx.setLineDash([4,4]);ctx.strokeStyle='rgba(249,168,212,.45)';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(pad.l,ty(TK));ctx.lineTo(pad.l+w,ty(TK));ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='rgba(249,168,212,.6)';ctx.font='10px -apple-system';ctx.textAlign='left';
+  ctx.fillText('1100',pad.l+w+2,ty(TK)+4);
+  data.forEach((d,i)=>{
+    const x=pad.l+i*(w/data.length)+gap/2,bh=d.v>0?(d.v/maxV)*h:2,y=pad.t+h-bh;
+    const col=d.v===0?'rgba(255,255,255,.06)':d.v>TK*1.05?'rgba(248,113,113,.7)':d.v>TK*.9?'rgba(251,191,36,.7)':'rgba(192,132,252,.75)';
+    const gr=ctx.createLinearGradient(0,y,0,pad.t+h);gr.addColorStop(0,col);gr.addColorStop(1,col.replace(/[\d.]+\)$/,'0.2)'));
+    ctx.fillStyle=gr;rRect(ctx,x,y,bw,bh,4);ctx.fill();
+    if(d.v>0){ctx.fillStyle='rgba(240,230,255,.8)';ctx.font='10px -apple-system';ctx.textAlign='center';ctx.fillText(d.v,x+bw/2,y-4);}
+    ctx.fillStyle='rgba(139,122,160,.8)';ctx.font='10px -apple-system';ctx.textAlign='center';ctx.fillText(d.l,x+bw/2,H-6);
+  });
+}
+function drawLine(id,data){
+  const r=getCtx(id);if(!r)return;const{ctx,W,H}=r;
+  const pad={t:20,r:16,b:36,l:42},w=W-pad.l-pad.r,h=H-pad.t-pad.b;
+  const valid=data.filter(d=>d.v!==null);if(valid.length<2){noData(ctx,W,H);return;}
+  const vals=valid.map(d=>d.v),mn=Math.min(...vals)-.5,mx=Math.max(...vals)+.5,rng=mx-mn||1;
+  const tx=i=>pad.l+(i/(data.length-1))*w,ty=v=>pad.t+h-((v-mn)/rng)*h;
+  grid(ctx,pad,w,h);
+  ctx.beginPath();let started=false;
+  data.forEach((d,i)=>{if(d.v===null){started=false;return;}if(!started){ctx.moveTo(tx(i),ty(d.v));started=true;}else ctx.lineTo(tx(i),ty(d.v));});
+  ctx.strokeStyle='#a78bfa';ctx.lineWidth=2.5;ctx.lineJoin='round';ctx.stroke();
+  data.forEach((d,i)=>{if(d.v===null)return;ctx.beginPath();ctx.arc(tx(i),ty(d.v),4,0,Math.PI*2);ctx.fillStyle='#f9a8d4';ctx.fill();ctx.strokeStyle='#080818';ctx.lineWidth=1.5;ctx.stroke();});
+  ctx.fillStyle='rgba(139,122,160,.8)';ctx.font='10px -apple-system';ctx.textAlign='center';
+  data.forEach((d,i)=>ctx.fillText(d.l,tx(i),H-6));
+  ctx.textAlign='right';for(let i=0;i<=3;i++){const v=mn+(rng*(1-i/3));ctx.fillText(v.toFixed(1),pad.l-4,pad.t+(i/3)*h+4);}
+}
+function grid(ctx,pad,w,h){ctx.strokeStyle='rgba(255,255,255,.05)';ctx.lineWidth=1;for(let i=0;i<=4;i++){const y=pad.t+(i/4)*h;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+w,y);ctx.stroke();}}
+function noData(ctx,W,H){ctx.fillStyle='rgba(139,122,160,.5)';ctx.font='13px -apple-system';ctx.textAlign='center';ctx.fillText('データがまだ足りません',W/2,H/2);}
+function rRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);ctx.lineTo(x+w,y+h);ctx.lineTo(x,y+h);ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);ctx.closePath();}
+
+// ══════════════════════════════════════════
+// MODALS
+// ══════════════════════════════════════════
+const openM=id=>document.getElementById(id).classList.add('show');
+const closeM=id=>document.getElementById(id).classList.remove('show');
+document.querySelectorAll('.mo').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)closeM(o.id);}));
+
+// ══════════════════════════════════════════
+// AJOUTER ALIMENT (avec recherche en ligne)
+// ══════════════════════════════════════════
+let selFood=null,searchTimer=null,onlineCtrl=null,onlineHits=[];
+
+function openFood(){
+  selFood=null;clearTimeout(searchTimer);
+  if(onlineCtrl){onlineCtrl.abort();onlineCtrl=null;}
+  document.getElementById('fs-input').value='';
+  document.getElementById('fs-g').value='';
+  document.getElementById('fs-res').classList.remove('show');
+  document.getElementById('fs-info').style.display='none';
+  document.getElementById('fs-prev').style.display='none';
+  openM('m-food');
+  setTimeout(()=>document.getElementById('fs-input').focus(),350);
+}
+
+function searchF(){
+  const raw=document.getElementById('fs-input').value;
+  const q=raw.toLowerCase().trim();
+  const res=document.getElementById('fs-res');
+  clearTimeout(searchTimer);
+  if(onlineCtrl){onlineCtrl.abort();onlineCtrl=null;}
+  if(!q){res.classList.remove('show');return;}
+  // Résultats locaux
+  const hits=getAllFoods().filter(f=>f.n.toLowerCase().includes(q)||f.c.toLowerCase().includes(q)).slice(0,8);
+  let html=hits.map(f=>`<div class="si" onclick="pickFood(${f.id})">
+    ${f.n}${f.custom?'<span class="custom-badge">⭐ マイ</span>':''}
+    <small>${f.k} kcal · ${f.p}g タンパク質 — 100gあたり</small>
+  </div>`).join('');
+  // Ligne de chargement pour Open Food Facts
+  html+=`<div class="si-load" id="ol-load"><div class="loader"></div>Open Food Factsで検索中…</div>`;
+  res.innerHTML=html;res.classList.add('show');
+  searchTimer=setTimeout(()=>fetchOnline(raw.trim()),650);
+}
+
+async function fetchOnline(q){
+  onlineCtrl=new AbortController();
+  try{
+    const r=await fetch(
+      `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}`+
+      `&search_simple=1&action=process&json=1&page_size=15&fields=product_name,brands,nutriments`,
+      {signal:onlineCtrl.signal}
+    );
+    const data=await r.json();
+    onlineHits=(data.products||[])
+      .filter(p=>p.product_name&&p.nutriments&&p.nutriments['energy-kcal_100g']>0&&p.nutriments['proteins_100g']!=null)
+      .slice(0,7)
+      .map((p,i)=>({i,n:p.product_name.trim(),brand:p.brands?p.brands.split(',')[0].trim():'',
+        k:Math.round(p.nutriments['energy-kcal_100g']),p:Math.round(p.nutriments['proteins_100g']*10)/10}));
+    const el=document.getElementById('ol-load');if(!el)return;
+    if(!onlineHits.length){
+      el.outerHTML=`<div class="si" onclick="openNewFood('journal')" style="color:var(--pink)">
+        ⭐ 見つかりません → <strong>手動で登録する</strong>
+        <small>カロリーとタンパク質を直接入力できます</small></div>`;
+      return;
+    }
+    el.outerHTML=onlineHits.map(f=>`<div class="si" onclick="pickOnline(${f.i})">
+      ${f.n}${f.brand?` <span style="font-size:11px;color:var(--muted)">${f.brand}</span>`:''}
+      <small>${f.k} kcal · ${f.p}g タンパク質 — 100gあたり <span class="online-tag">🌐 Open Food Facts</span></small>
+    </div>`).join('')+
+    `<div class="si" onclick="openNewFood('journal')" style="color:var(--muted);font-size:12px">⭐ 上にない場合 → 手動で登録する</div>`;
+  }catch(e){
+    if(e.name==='AbortError')return;
+    const el=document.getElementById('ol-load');
+    if(el)el.outerHTML=`<div class="si" onclick="openNewFood('journal')" style="color:var(--pink)">⭐ 接続エラー → 手動で登録する</div>`;
+  }
+}
+
+function pickOnline(idx){
+  const f=onlineHits[idx];if(!f)return;
+  const label=f.n+(f.brand?` (${f.brand})`:'');
+  selFood={id:'ol_'+Date.now(),n:label,c:'🌐',k:f.k,p:f.p,online:true};
+  document.getElementById('fs-input').value=label;
+  document.getElementById('fs-res').classList.remove('show');
+  document.getElementById('fs-info').style.display='block';
+  document.getElementById('fs-name').textContent=label;
+  document.getElementById('fs-per').textContent=`100gあたり：${f.k} kcal · ${f.p}g タンパク質  🌐`;
+  document.getElementById('fs-prev').style.display='none';
+  document.getElementById('fs-g').value='';
+  document.getElementById('fs-g').focus();
+}
+
+function pickFood(id){
+  selFood=getAllFoods().find(f=>f.id===id);
+  document.getElementById('fs-input').value=selFood.n;
+  document.getElementById('fs-res').classList.remove('show');
+  document.getElementById('fs-info').style.display='block';
+  document.getElementById('fs-name').textContent=selFood.n;
+  document.getElementById('fs-per').textContent=`100gあたり：${selFood.k} kcal · ${selFood.p}g タンパク質`;
+  calcF();
+}
+
+function calcF(){
+  if(!selFood)return;
+  const g=parseFloat(document.getElementById('fs-g').value);
+  if(!g||g<=0){document.getElementById('fs-prev').style.display='none';return;}
+  document.getElementById('fp-kcal').textContent=Math.round(selFood.k*g/100)+' kcal';
+  document.getElementById('fp-prot').textContent=(Math.round(selFood.p*g/100*10)/10)+' g';
+  document.getElementById('fs-prev').style.display='block';
+}
+
+function addFood(){
+  if(!selFood){showToast('食べ物を選んでください');return;}
+  const g=parseFloat(document.getElementById('fs-g').value);
+  if(!g||g<=0){showToast('グラム数を入力してください');return;}
+  const k=Math.round(selFood.k*g/100),p=Math.round(selFood.p*g/100*10)/10;
+  const td=today(),e=getJ(td);
+  const fid=selFood.online?null:selFood.id;
+  e.meals.push({n:selFood.n,g,k,p,fid});setJ(e);
+  const savedFood=selFood.online?{...selFood}:null;
+  closeM('m-food');rJournal();rAccueil();
+  if(savedFood)showToastSave(savedFood);
+}
+
+function showToastSave(food){
+  document.getElementById('ts-save')?.remove();
+  const t=document.createElement('div');t.id='ts-save';
+  t.style.cssText='position:fixed;bottom:calc(var(--nav) + var(--safe) + 14px);left:50%;transform:translateX(-50%);'+
+    'background:#1a0a2e;border:1px solid var(--border);border-radius:16px;padding:12px 16px;'+
+    'font-size:13px;color:var(--text);z-index:200;backdrop-filter:blur(10px);'+
+    'display:flex;align-items:center;gap:10px;max-width:88vw;box-shadow:0 4px 20px rgba(0,0,0,.5)';
+  t.innerHTML=`<span style="flex:1;color:var(--muted);font-size:12px">マイ食材に保存する？</span>`+
+    `<button onclick="doSaveOnline()" style="background:linear-gradient(135deg,var(--purple),var(--accent));`+
+    `color:#fff;border:none;border-radius:10px;padding:6px 14px;font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">⭐ 保存</button>`+
+    `<button onclick="this.closest('#ts-save').remove()" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;flex-shrink:0">×</button>`;
+  document.body.appendChild(t);
+  window._pendingSaveFood=food;
+  setTimeout(()=>t.remove(),7000);
+}
+function doSaveOnline(){
+  const f=window._pendingSaveFood;if(!f)return;
+  const cfs=getCFs();cfs.push({id:Date.now(),n:f.n,c:'🌐 En ligne',k:f.k,p:f.p,custom:true});
+  setCFs(cfs);document.getElementById('ts-save')?.remove();showToast('マイ食材に保存しました ⭐');
+}
+
+// ══════════════════════════════════════════
+// MODIFIER UN REPAS
+// ══════════════════════════════════════════
+let editMealIdx=null,editMealFid=null;
+function editMeal(i){
+  const m=getJ(today()).meals[i];
+  editMealIdx=i;editMealFid=m.fid||null;
+  document.getElementById('em-name').value=m.n;
+  document.getElementById('em-g').value=m.g||'';
+  document.getElementById('em-kcal').value=m.k;
+  document.getElementById('em-prot').value=m.p;
+  document.getElementById('em-g-wrap').style.display=m.g?'block':'none';
+  openM('m-edit-meal');
+}
+function calcEditMeal(){
+  if(!editMealFid)return;
+  const g=parseFloat(document.getElementById('em-g').value);if(!g||g<=0)return;
+  const food=getAllFoods().find(f=>f.id===editMealFid);if(!food)return;
+  document.getElementById('em-kcal').value=Math.round(food.k*g/100);
+  document.getElementById('em-prot').value=Math.round(food.p*g/100*10)/10;
+}
+function saveEditMeal(){
+  const name=document.getElementById('em-name').value.trim();
+  const kcal=parseFloat(document.getElementById('em-kcal').value);
+  const prot=parseFloat(document.getElementById('em-prot').value);
+  const g=parseFloat(document.getElementById('em-g').value)||null;
+  if(!name){showToast('名前を入力してください');return;}
+  if(isNaN(kcal)||kcal<0){showToast('カロリーを入力してください');return;}
+  if(isNaN(prot)||prot<0){showToast('タンパク質を入力してください');return;}
+  const td=today(),e=getJ(td);
+  e.meals[editMealIdx]={...e.meals[editMealIdx],n:name,g,k:Math.round(kcal),p:Math.round(prot*10)/10};
+  setJ(e);closeM('m-edit-meal');rJournal();rAccueil();showToast('修正しました ✨');
+}
+
+// ══════════════════════════════════════════
+// NOUVELLE FOOD CUSTOM
+// ══════════════════════════════════════════
+let newFoodCtx=null;
+function openNewFood(ctx){
+  newFoodCtx=ctx;
+  document.getElementById('nf-name').value=ctx==='journal'?document.getElementById('fs-input').value.trim():'';
+  document.getElementById('nf-kcal').value='';
+  document.getElementById('nf-prot').value='';
+  document.getElementById('nf-prev').style.display='none';
+  openM('m-new-food');
+  setTimeout(()=>document.getElementById('nf-name').focus(),350);
+}
+function previewNF(){
+  const k=document.getElementById('nf-kcal').value,p=document.getElementById('nf-prot').value;
+  const pv=document.getElementById('nf-prev');
+  if(k||p){pv.style.display='block';document.getElementById('nf-prev-txt').textContent=`${k||'?'} kcal · ${p||'?'}g タンパク質`;}
+  else pv.style.display='none';
+}
+function saveNewFood(){
+  const name=document.getElementById('nf-name').value.trim();
+  const kcal=parseFloat(document.getElementById('nf-kcal').value);
+  const prot=parseFloat(document.getElementById('nf-prot').value);
+  if(!name){showToast('名前を入力してください');return;}
+  if(isNaN(kcal)||kcal<0){showToast('カロリーを入力してください');return;}
+  if(isNaN(prot)||prot<0){showToast('タンパク質を入力してください');return;}
+  const newId=Date.now();
+  const newFood={id:newId,n:name,c:'マイ食材',k:kcal,p:prot,custom:true};
+  const cfs=getCFs();cfs.push(newFood);setCFs(cfs);
+  closeM('m-new-food');showToast(`「${name}」を登録しました ⭐`);
+  if(newFoodCtx==='journal'){
+    selFood=newFood;
+    document.getElementById('fs-input').value=name;
+    document.getElementById('fs-res').classList.remove('show');
+    document.getElementById('fs-info').style.display='block';
+    document.getElementById('fs-name').textContent=name;
+    document.getElementById('fs-per').textContent=`100gあたり：${kcal} kcal · ${prot}g タンパク質`;
+    document.getElementById('fs-prev').style.display='none';
+    document.getElementById('fs-g').value='';
+    document.getElementById('fs-g').focus();
+  } else if(newFoodCtx==='recipe'){
+    addIng();
+    const rows=document.querySelectorAll('#cr-ings .ir');
+    const last=rows[rows.length-1];
+    const f=getAllFoods().find(x=>x.id===parseInt(newId));
+    if(last&&f){last.querySelector('.ing-txt').value=f.n;last.querySelector('.ing-fid').value=newId;calcRecipe();}
+  } else rRecettes();
+}
+
+// ══════════════════════════════════════════
+// RECETTE → JOURNAL
+// ══════════════════════════════════════════
+function openRecipeJournal(){
+  const rs=getRs(),el=document.getElementById('m-rj-list');
+  el.innerHTML=rs.length?rs.map((r,i)=>`
+    <div class="ri">
+      <div><div style="font-size:14px;font-weight:600">${r.n}</div>
+      <div style="font-size:12px;color:var(--muted)">${r.k} kcal · ${r.p}g タンパク質</div></div>
+      <button class="radd" onclick="addRecNow(${i})">追加</button>
+    </div>`).join('')
+    :'<p style="color:var(--muted);font-size:14px;text-align:center;padding:20px 0">レシピがまだありません 🌙</p>';
+  openM('m-rj');
+}
+function addRecNow(i){recToJournal(i);closeM('m-rj');}
+
+// ══════════════════════════════════════════
+// CRÉER / MODIFIER RECETTE
+// ══════════════════════════════════════════
+let editingRecipeIdx=null;
+
+function addIng(){
+  const row=document.createElement('div');row.className='ir';
+  row.innerHTML=`<div class="ing-sw">
+    <input type="text" class="ing-txt" placeholder="食べ物を検索..." autocomplete="off"
+      oninput="ingSearch(this)" onfocus="ingSearch(this)"
+      onblur="setTimeout(()=>{const d=this.closest('.ing-sw').querySelector('.ing-drop');if(d)d.classList.remove('open')},200)">
+    <input type="hidden" class="ing-fid">
+    <div class="ing-drop"></div>
+  </div>
+  <input type="number" placeholder="g" min="1" max="2000" oninput="calcRecipe()">
+  <button onclick="this.closest('.ir').remove();calcRecipe()">×</button>`;
+  document.getElementById('cr-ings').appendChild(row);
+}
+function ingSearch(input){
+  const q=input.value.trim().toLowerCase();
+  const drop=input.closest('.ing-sw').querySelector('.ing-drop');
+  const foods=getAllFoods();
+  const filtered=q?foods.filter(f=>f.n.toLowerCase().includes(q)):foods.slice(0,25);
+  if(!filtered.length){drop.classList.remove('open');return;}
+  drop.innerHTML=filtered.slice(0,12).map(f=>
+    `<div class="ing-di" onmousedown="pickIng(this,'${f.id}','${f.n.replace(/'/g,"\\'")}')">${f.custom?'⭐ ':''}${f.n}</div>`
+  ).join('');
+  drop.classList.add('open');
+}
+function pickIng(el,id,name){
+  const sw=el.closest('.ing-sw');
+  sw.querySelector('.ing-txt').value=name;
+  sw.querySelector('.ing-fid').value=id;
+  sw.querySelector('.ing-drop').classList.remove('open');
+  calcRecipe();
+  sw.closest('.ir').querySelector('input[type=number]').focus();
+}
+function calcRecipe(){
+  const rows=document.querySelectorAll('#cr-ings .ir');
+  let tk=0,tp=0,tg=0,ok=false;
+  rows.forEach(r=>{
+    const id=parseInt(r.querySelector('.ing-fid').value),g=parseFloat(r.querySelector('input[type=number]').value);
+    if(!id||!g)return;const f=getAllFoods().find(x=>x.id===id);if(!f)return;
+    tk+=f.k*g/100;tp+=f.p*g/100;tg+=g;ok=true;
+  });
+  const pv=document.getElementById('cr-prev');
+  if(ok){pv.style.display='block';document.getElementById('cr-kcal').textContent=Math.round(tk)+' kcal';
+    document.getElementById('cr-prot').textContent=(Math.round(tp*10)/10)+' g';
+    document.getElementById('cr-g').textContent=Math.round(tg)+' g';}
+  else pv.style.display='none';
+}
+function openCreateRecipe(){
+  editingRecipeIdx=null;
+  document.getElementById('cr-title').innerHTML='🍜 レシピを<ruby>作<rt>つく</rt></ruby>る';
+  document.getElementById('cr-name').value='';
+  document.getElementById('cr-ings').innerHTML='';
+  document.getElementById('cr-prev').style.display='none';
+  addIng();openM('m-cr');
+}
+function editRecipe(idx){
+  editingRecipeIdx=idx;
+  const r=getRs()[idx];
+  document.getElementById('cr-title').innerHTML='✏️ レシピを<ruby>修正<rt>しゅうせい</rt></ruby>する';
+  document.getElementById('cr-name').value=r.n;
+  document.getElementById('cr-ings').innerHTML='';
+  r.ings.forEach(ing=>{
+    addIng();
+    const rows=document.querySelectorAll('#cr-ings .ir');
+    const last=rows[rows.length-1];
+    const f=getAllFoods().find(x=>x.id===parseInt(ing.id));
+    if(f){last.querySelector('.ing-txt').value=f.n;last.querySelector('.ing-fid').value=ing.id;}
+    last.querySelector('input[type=number]').value=ing.g;
+  });
+  calcRecipe();openM('m-cr');
+}
+function saveRecipe(){
+  const name=document.getElementById('cr-name').value.trim();
+  if(!name){showToast('レシピの名前を入力してください');return;}
+  const rows=document.querySelectorAll('#cr-ings .ir');
+  let tk=0,tp=0,tg=0,ings=[],ok=false;
+  rows.forEach(r=>{
+    const id=parseInt(r.querySelector('.ing-fid').value),g=parseFloat(r.querySelector('input[type=number]').value);
+    if(!id||!g)return;const f=getAllFoods().find(x=>x.id===id);if(!f)return;
+    ings.push({id,n:f.n,g});tk+=f.k*g/100;tp+=f.p*g/100;tg+=g;ok=true;
+  });
+  if(!ok){showToast('材料を少なくとも一つ追加してください');return;}
+  const rs=getRs();
+  const entry={n:name,ings,k:Math.round(tk),p:Math.round(tp*10)/10,g:Math.round(tg)};
+  if(editingRecipeIdx!==null){
+    rs[editingRecipeIdx]={...rs[editingRecipeIdx],...entry};
+    editingRecipeIdx=null;showToast('レシピを修正しました ✨');
+  } else {
+    rs.push({id:Date.now()+'', ...entry});showToast('レシピを保存しました ✨');
+  }
+  setRs(rs);closeM('m-cr');rRecettes();
+}
+
+// ══════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════
+function fmtD(d){const dt=new Date(d+'T00:00:00'),wd=['日','月','火','水','木','金','土'];return`${dt.getMonth()+1}/${dt.getDate()}（${wd[dt.getDay()]}）`;}
+function fmtDs(d){const dt=new Date(d+'T00:00:00');return`${dt.getMonth()+1}/${dt.getDate()}`;}
+
+let toastTimer=null;
+function showToast(msg){
+  let t=document.getElementById('toast');
+  if(!t){t=document.createElement('div');t.id='toast';
+    t.style.cssText='position:fixed;bottom:calc(var(--nav) + var(--safe) + 12px);left:50%;transform:translateX(-50%);'+
+      'background:rgba(15,11,36,.95);border:1px solid var(--border);border-radius:20px;padding:10px 20px;'+
+      'font-size:14px;color:var(--text);z-index:200;white-space:nowrap;backdrop-filter:blur(10px);'+
+      'transition:opacity .3s ease;pointer-events:none';
+    document.body.appendChild(t);}
+  t.textContent=msg;t.style.opacity='1';
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.style.opacity='0',2500);
+}
+
+window.addEventListener('resize',()=>{if(cur==='poids')rPoids();if(cur==='semaine')rSemaine();});
+rAccueil();
+</script>
+</body>
+</html>

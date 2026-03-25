@@ -1,0 +1,18 @@
+{
+  "name": "夜空 Yozora",
+  "short_name": "Yozora",
+  "description": "Mon suivi perte de poids — thème Yozora 🌙",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#080818",
+  "theme_color": "#080818",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
