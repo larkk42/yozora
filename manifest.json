@@ -3,6 +3,7 @@
   "short_name": "Yozora",
   "description": "Mon suivi perte de poids — thème Yozora 🌙",
   "start_url": "/yozora/",
+  "scope": "/yozora/",
   "display": "standalone",
   "background_color": "#080818",
   "theme_color": "#080818",
